@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Seguimiento</h1>
+<p class="lede">Listas, shortlist, etiquetas y notas quedan en la base. No dependen de que el navegador siga abierto.</p>
+<section class="split">
+  <article class="card">
+    <h2>Listas</h2>
+    <form method="post" action="/seguimiento/listas" class="inline">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label>Nueva lista<input name="name" required></label>
+      <button type="submit">Crear</button>
+    </form>
+    {% for lista in data.listas %}
+      <h3>{{ lista.name }}</h3>
+      <ul>
+      {% for item in lista["items"] %}
+        <li>
+          <a href="/productos/{{ item.supplier_id }}/{{ item.product_id_dropi }}">{{ item.nombre }}</a>
+          <span class="muted">{{ item.proveedor }}</span>
+          <form method="post" action="/seguimiento/listas/{{ lista.id }}/quitar" style="display:inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <input type="hidden" name="supplier_id" value="{{ item.supplier_id }}">
+            <input type="hidden" name="product_id" value="{{ item.product_id_dropi }}">
+            <button class="secondary" type="submit">Quitar</button>
+          </form>
+        </li>
+      {% else %}<li>Lista vacía.</li>{% endfor %}
+      </ul>
+    {% else %}<p>Todavía no hay listas.</p>{% endfor %}
+  </article>
+  <article class="card">
+    <h2>Shortlist</h2>
+    <ul>
+      {% for item in data.shortlist %}
+      <li><a href="/productos/{{ item.supplier_id }}/{{ item.product_id_dropi }}">{{ item.nombre }}</a> · {{ item.clasificacion }}</li>
+      {% else %}<li>Nadie está en el shortlist.</li>{% endfor %}
+    </ul>
+    <h2>Clases</h2>
+    <ul>{% for row in data.clases %}<li>{{ row.etiqueta }}: {{ row.n }}</li>{% endfor %}</ul>
+    <h2>Etiquetas</h2>
+    <p>{% for tag in data.etiquetas %}<span class="badge">{{ tag.name }} · {{ tag.usos }}</span>{% else %}Sin etiquetas.{% endfor %}</p>
+  </article>
+</section>
+<article class="card">
+  <h2>Notas recientes</h2>
+  <ul>
+    {% for nota in data.notas %}
+    <li><a href="/productos/{{ nota.supplier_id }}/{{ nota.product_id_dropi }}">{{ nota.nombre }}</a>: {{ nota.body }} <span class="muted">{{ nota.fecha }}</span></li>
+    {% else %}<li>Sin notas.</li>{% endfor %}
+  </ul>
+</article>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="muted"><a href="/estudio">Estudio creativo</a></p>
+<h1>{{ ficha.title }}</h1>
+<p class="warn">Esta ficha no produce imágenes ni video. Generadores registrados: {{ generadores|length }}.</p>
+<form method="post" action="/estudio/{{ ficha.id }}" class="card stack" style="flex-direction: column; align-items: stretch;">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label>Título<input name="title" required value="{{ ficha.title }}"></label>
+  <label>ID de producto<input name="product_id_dropi" value="{{ ficha.product_id_dropi or '' }}"></label>
+  <label>ID de proveedor<input name="supplier_id" value="{{ ficha.supplier_id or '' }}"></label>
+  <label>A quién<textarea name="audience">{{ ficha.audience or '' }}</textarea></label>
+  <label>Promesa<textarea name="promise">{{ ficha.promise or '' }}</textarea></label>
+  <label>Objeciones<textarea name="objections">{{ ficha.objections or '' }}</textarea></label>
+  <label>Notas<textarea name="notes">{{ ficha.notes or '' }}</textarea></label>
+  <label>Estado
+    <select name="status">
+      {% for estado in ["borrador", "en_revision", "listo"] %}
+      <option value="{{ estado }}" {% if ficha.status == estado %}selected{% endif %}>{{ estado }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit">Guardar cambios</button>
+</form>
+<p class="muted">Actualizada {{ ficha.actualizado }}.</p>
+{% endblock %}

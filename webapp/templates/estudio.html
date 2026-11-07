@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Estudio creativo</h1>
+<p class="lede">Aquí se guardan fichas de producto: a quién hablan, qué prometen y qué objeción hay que responder. Generar banners o video no está incluido.</p>
+<div class="warn">Módulos futuros, no operativos: pieza estática y video. Generadores registrados: {{ generadores|length }}. No hay un botón que simule crearlos.</div>
+<article class="card">
+  <h2>Nueva ficha</h2>
+  <form method="post" action="/estudio" class="stack" style="flex-direction: column; align-items: stretch;">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Título<input name="title" required></label>
+    <label>ID de producto<input name="product_id_dropi" inputmode="numeric"></label>
+    <label>ID de proveedor<input name="supplier_id" inputmode="numeric"></label>
+    <label>A quién<input name="audience"></label>
+    <label>Promesa<textarea name="promise"></textarea></label>
+    <label>Objeciones<textarea name="objections"></textarea></label>
+    <label>Notas<textarea name="notes"></textarea></label>
+    <label>Estado
+      <select name="status">
+        <option value="borrador">Borrador</option>
+        <option value="en_revision">En revisión</option>
+        <option value="listo">Listo para revisar</option>
+      </select>
+    </label>
+    <button type="submit">Guardar ficha</button>
+  </form>
+</article>
+<div class="card table-wrap" style="margin-top: 1rem;">
+  <table>
+    <thead><tr><th>Ficha</th><th>Producto</th><th>Estado</th><th>Actualizada</th></tr></thead>
+    <tbody>
+    {% for ficha in fichas %}
+      <tr>
+        <td><a href="/estudio/{{ ficha.id }}">{{ ficha.title }}</a></td>
+        <td>{{ ficha.producto or "Sin producto" }}</td>
+        <td>{{ ficha.status }}</td>
+        <td>{{ ficha.actualizado }}</td>
+      </tr>
+    {% else %}<tr><td colspan="4">Todavía no hay fichas.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

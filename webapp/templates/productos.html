@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Productos</h1>
+<p class="lede">Incluye el catálogo manual y el que solo está en seguimiento. Busca, filtra y abre la evidencia de stock.</p>
+<form class="filters card" method="get" action="/productos">
+  <label>Buscar<input name="q" value="{{ filtros.q or '' }}" placeholder="Nombre, SKU o ID"></label>
+  <label>Proveedor
+    <select name="proveedor">
+      <option value="">Todos</option>
+      {% for prov in proveedores %}
+      <option value="{{ prov['supplier_id'] }}" {% if filtros.proveedor == prov['supplier_id']|string %}selected{% endif %}>
+        {{ prov['store_name'] or prov['manual_name'] or prov['supplier_id'] }}
+      </option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Categoría<input name="categoria" value="{{ filtros.categoria or '' }}"></label>
+  <label>Clasificación
+    <select name="clasificacion">
+      <option value="">Todas</option>
+      {% for key, label in clasificaciones.items() %}
+      <option value="{{ key }}" {% if filtros.clasificacion == key %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Ventana
+    <select name="horas">
+      {% for hours in ventanas %}
+      <option value="{{ hours }}" {% if data.horas == hours %}selected{% endif %}>{{ hours }} h</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Orden
+    <select name="orden">
+      <option value="nombre">Nombre</option>
+      <option value="stock" {% if filtros.orden == 'stock' %}selected{% endif %}>Stock</option>
+      <option value="reciente" {% if filtros.orden == 'reciente' %}selected{% endif %}>Visto</option>
+    </select>
+  </label>
+  <label><input type="checkbox" name="shortlist" value="1" {% if filtros.shortlist == '1' %}checked{% endif %}> Solo shortlist</label>
+  <label><input type="checkbox" name="seguimiento" value="1" {% if filtros.seguimiento == '1' %}checked{% endif %}> Solo seguimiento</label>
+  <button type="submit">Filtrar</button>
+</form>
+<p class="muted">{{ data.total }} productos. La baja de la ventana es un proxy, no una venta.</p>
+<div class="card table-wrap">
+  <table>
+    <thead>
+      <tr><th>Producto</th><th>Proveedor</th><th>Stock</th><th>Baja {{ data.horas }} h</th><th>Confianza</th><th>Clase</th></tr>
+    </thead>
+    <tbody>
+    {% for item in data["items"] %}
+      <tr>
+        <td><a href="/productos/{{ item.supplier_id }}/{{ item.product_id_dropi }}">{{ item.nombre or "Sin nombre" }}</a><br><span class="muted">{{ item.sku or "" }}</span></td>
+        <td>{{ item.proveedor }}</td>
+        <td>{{ item.stock if item.stock is not none else "—" }}</td>
+        <td>{{ item.movimiento.unidades_baja if item.movimiento.confianza != "insuficiente" else "insuficiente" }}</td>
+        <td><span class="badge {{ item.movimiento.confianza }}">{{ item.movimiento.confianza }}</span></td>
+        <td>{{ item.clasificacion_etiqueta }}{% if item.shortlist %} · shortlist{% endif %}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6">No hay productos con ese filtro.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="pager">
+  {% if anterior %}<a href="{{ anterior }}">Anterior</a>{% endif %}
+  <span>Página {{ data.pagina }} de {{ data.paginas }}</span>
+  {% if siguiente %}<a href="{{ siguiente }}">Siguiente</a>{% endif %}
+</div>
+<div class="actions"><a class="button secondary" href="/export/productos">Descargar Excel</a></div>
+{% endblock %}

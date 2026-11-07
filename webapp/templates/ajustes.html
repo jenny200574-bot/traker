@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Ajustes</h1>
+<p class="lede">La cuenta, Dropi y los horarios viven en el servidor. El navegador no recibe la clave ni el token.</p>
+<section class="grid cards">
+  <article class="card">
+    <h2>Dropi</h2>
+    <p>Correo guardado: {{ dropi.email_enmascarado or "ninguno" }}. Clave: {{ "sí" if dropi.tiene_clave else "no" }}. Token: {{ "sí" if dropi.tiene_token else "no" }}.</p>
+    <form method="post" action="/ajustes/dropi" class="stack" style="flex-direction: column; align-items: stretch;">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label>Correo<input name="email" type="email" autocomplete="off" placeholder="Se reemplaza si lo escribes"></label>
+      <label>Clave<input name="password" type="password" autocomplete="new-password" placeholder="En blanco no cambia la anterior"></label>
+      <button type="submit">Guardar en el servidor</button>
+    </form>
+    <form method="post" action="/ajustes/trabajos" class="actions">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button name="tipo" value="probar_conexion" type="submit">Probar conexión</button>
+      <button name="tipo" value="descargar" type="submit">Descargar seguimiento</button>
+      <button name="tipo" value="sincronizar" class="secondary" type="submit">Sincronizar directorio</button>
+      <button name="tipo" value="metricas" class="secondary" type="submit">Traer métricas mensuales</button>
+    </form>
+    <p class="muted">Esos botones solo encolan. Hace falta el worker: <code>python -m webapp.worker</code>. En demostración no se llama a Dropi.</p>
+  </article>
+  <article class="card">
+    <h2>Cuenta · {{ usuario }}</h2>
+    <form method="post" action="/ajustes/clave" class="stack" style="flex-direction: column; align-items: stretch;">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label>Clave actual<input name="actual" type="password" required></label>
+      <label>Nueva<input name="nueva" type="password" required minlength="10"></label>
+      <label>Repite<input name="nueva2" type="password" required minlength="10"></label>
+      <button type="submit">Cambiar clave</button>
+    </form>
+    <form method="post" action="/salir"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="secondary" type="submit">Salir</button></form>
+    <h2>Datos de demostración</h2>
+    <form method="post" action="/ajustes/demo">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="demo" value="{{ 0 if demo_flag else 1 }}">
+      <button type="submit">{{ "Volver a la base real" if demo_flag else "Abrir datos de demostración" }}</button>
+    </form>
+  </article>
+</section>
+<article class="card">
+  <h2>Zona de los horarios: {{ zona }}</h2>
+  <form method="post" action="/ajustes/zona" class="inline">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Zona IANA<input name="timezone" value="{{ zona }}" required></label>
+    <button type="submit">Guardar zona</button>
+  </form>
+  <form method="post" action="/ajustes/horarios" class="inline">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Hora<input name="hour" type="number" min="0" max="23" required></label>
+    <label>Minuto<input name="minute" type="number" min="0" max="59" required></label>
+    <label>Trabajo
+      <select name="job_type">
+        <option value="descargar">Descargar</option>
+        <option value="sincronizar">Sincronizar</option>
+        <option value="metricas">Métricas</option>
+      </select>
+    </label>
+    <button type="submit">Añadir horario</button>
+  </form>
+  <ul>
+    {% for row in horarios %}
+    <li>{{ "%02d"|format(row.hour) }}:{{ "%02d"|format(row.minute) }} · {{ row.job_type }}
+      <form method="post" action="/ajustes/horarios/{{ row.id }}/borrar" style="display:inline">
+        <input type="hidden" name="csrf" value="{{ csrf }}"><button class="secondary" type="submit">Quitar</button>
+      </form>
+    </li>
+    {% else %}<li>No hay horarios. Nada se descarga solo hasta que agregues uno.</li>{% endfor %}
+  </ul>
+</article>
+<article class="card">
+  <h2>Umbrales no validados</h2>
+  <form method="post" action="/ajustes/umbrales" class="filters">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Reversión sospechosa<input name="suspicious_restore_ratio" value="{{ umbrales.suspicious_restore_ratio }}"></label>
+    <label>Baja grande, fracción<input name="suspicious_drop_pct" value="{{ umbrales.suspicious_drop_pct }}"></label>
+    <label>Baja grande, unidades<input name="suspicious_drop_abs" value="{{ umbrales.suspicious_drop_abs }}"></label>
+    <label>Mínimo para categoría<input name="min_baseline_products" value="{{ umbrales.min_baseline_products }}"></label>
+    <label>Horas para dato viejo<input name="stale_hours" value="{{ umbrales.stale_hours }}"></label>
+    <label>Hueco, horas<input name="gap_hours" value="{{ umbrales.gap_hours }}"></label>
+    <button type="submit">Guardar umbrales</button>
+  </form>
+</article>
+<article class="card">
+  <h2>Importar base de escritorio</h2>
+  <p class="muted">Se lee una copia y no se modifica tu archivo original. Los CSV de <code>backups_historial</code> no entran en esta versión. Antes se guarda un respaldo de la base web.</p>
+  <form method="post" action="/ajustes/importar" enctype="multipart/form-data" class="inline">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input name="archivo" type="file" accept=".db,.sqlite,.sqlite3" required>
+    <button type="submit">Importar a la base real</button>
+  </form>
+</article>
+<article class="card">
+  <h2>Trabajos de la base real</h2>
+  <p class="muted">El worker los ejecuta aunque cierres esta página. En demostración esta lista sigue siendo la de la base real.</p>
+  {% for job in trabajos %}
+    <details>
+      <summary>#{{ job.id }} {{ job.job_type }} · <span class="badge {{ job.status }}">{{ job.status }}</span> {{ job.progress or "" }}</summary>
+      <pre class="log">{{ job.log_tail or job.log or "Sin registro." }}</pre>
+      {% if job.status in ["queued", "running"] %}
+      <form method="post" action="/ajustes/trabajos/{{ job.id }}/cancelar">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button class="danger" type="submit">Cancelar</button>
+      </form>
+      {% endif %}
+    </details>
+  {% else %}<p>No hay trabajos.</p>{% endfor %}
+</article>
+<div class="actions">
+  <a class="button secondary" href="/export/observaciones">Excel de observaciones</a>
+  <a class="button secondary" href="/export/productos">Excel de productos</a>
+</div>
+{% endblock %}
