@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf" content="{{ csrf }}">
+  <title>Crear acceso · Dropi Tracker</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<main class="main" style="max-width: 520px; margin: 4vh auto;">
+  <h1>Crear el acceso de este equipo</h1>
+  <p class="lede">Una sola persona. No hay usuario ni clave de fábrica. La cuenta queda en la base local.</p>
+  {% if error %}<div class="warn">{{ error }}</div>{% endif %}
+  <form method="post" action="/setup" class="stack" style="flex-direction: column; align-items: stretch;">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Usuario<input name="username" required minlength="3" value="{{ username or '' }}" autocomplete="username"></label>
+    <label>Clave<input name="password" type="password" required minlength="10" autocomplete="new-password"></label>
+    <label>Repite la clave<input name="password2" type="password" required minlength="10" autocomplete="new-password"></label>
+    <button type="submit">Crear acceso</button>
+  </form>
+</main>
+</body>
+</html>

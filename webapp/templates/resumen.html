@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Resumen</h1>
+<p class="lede">De la evidencia al seguimiento: mira qué hay en la base, abre un producto y decide si entra en una lista o en una ficha.</p>
+{% if data.vacio %}
+<div class="note">{{ data.nota_vacio }}</div>
+{% endif %}
+<section class="grid stats">
+  <article class="card stat"><span>Productos en esta base</span><strong>{{ data.productos }}</strong><em>conteo real</em></article>
+  <article class="card stat"><span>Proveedores</span><strong>{{ data.proveedores }}</strong><em>conteo real</em></article>
+  <article class="card stat"><span>En seguimiento</span><strong>{{ data.en_seguimiento }}</strong><em>catálogo a descargar</em></article>
+  <article class="card stat"><span>Shortlist</span><strong>{{ data.shortlist }}</strong><em>marcados por ti</em></article>
+</section>
+<div class="note">{{ data.stale_text }} Observaciones: {{ data.observaciones }}. De ellas, con procedencia legado y cobertura desconocida: {{ data.observaciones_legado }}.</div>
+<section class="grid cards">
+  <article class="card">
+    <h2>Bajas observadas, 72 h</h2>
+    <p class="muted">{{ data.nota_proxy }}</p>
+    {% if data.proxies %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Producto</th><th>Baja</th><th>Confianza</th></tr></thead>
+        <tbody>
+        {% for item in data.proxies %}
+          <tr>
+            <td><a href="/productos/{{ item.supplier_id }}/{{ item.product_id_dropi }}">{{ item.nombre }}</a><br><span class="muted">{{ item.proveedor }}</span></td>
+            <td>{{ item.movimiento.unidades_baja }}</td>
+            <td><span class="badge {{ item.movimiento.confianza }}">{{ item.movimiento.confianza }}</span></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p>No hay una baja con al menos dos observaciones en 72 h. No se rellena esta lista.</p>
+    {% endif %}
+  </article>
+  <article class="card">
+    <h2>Pedidos mensuales del proveedor</h2>
+    <p class="muted">Cifra aparte. No se suma a las bajas de stock ni se reparte por bodega física.</p>
+    {% if data.metricas %}
+    <ul>
+      {% for row in data.metricas %}
+      <li>{{ row.nombre }}: {{ row.pedidos_mensuales }} pedidos, {{ row.dropshippers_mensuales }} dropshippers.</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>No hay métricas mensuales guardadas.</p>
+    {% endif %}
+    {% if data.ultimo_trabajo %}
+    <p class="muted">Último trabajo: #{{ data.ultimo_trabajo.id }} {{ data.ultimo_trabajo.job_type }} · {{ data.ultimo_trabajo.status }}</p>
+    {% endif %}
+  </article>
+</section>
+<div class="actions">
+  <a class="button" href="/productos">Ver productos</a>
+  <a class="button secondary" href="/ajustes">Configurar o importar</a>
+</div>
+{% endblock %}

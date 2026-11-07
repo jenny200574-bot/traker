@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Tendencias</h1>
+<p class="lede">{{ data.aviso }}</p>
+<form method="get" class="inline">
+  <label>Ventana
+    <select name="horas" onchange="this.form.submit()">
+      {% for hours in ventanas %}<option value="{{ hours }}" {% if data.horas == hours %}selected{% endif %}>{{ hours }} h</option>{% endfor %}
+    </select>
+  </label>
+</form>
+{% if data.truncado %}<div class="note">La vista se limitó a 2000 productos. El resto no se estimó.</div>{% endif %}
+<div class="card table-wrap">
+  <table>
+    <thead><tr><th>Producto</th><th>Baja observada</th><th>Reposición</th><th>Confianza</th><th>Por qué</th></tr></thead>
+    <tbody>
+    {% for item in data["items"] %}
+      <tr>
+        <td><a href="/productos/{{ item.supplier_id }}/{{ item.product_id_dropi }}">{{ item.nombre }}</a><br><span class="muted">{{ item.proveedor }} · {{ item.categoria }}</span></td>
+        <td>{{ item.movimiento.unidades_baja }}</td>
+        <td>{{ item.movimiento.reposiciones }}</td>
+        <td><span class="badge {{ item.movimiento.confianza }}">{{ item.movimiento.confianza }}</span><br><span class="muted">{{ item.movimiento.cobertura }}</span></td>
+        <td>{{ item.movimiento.etiqueta }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5">No hay movimientos con evidencia en esta ventana.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+<h2>Comparar con la categoría</h2>
+<div class="card table-wrap">
+  <table>
+    <thead><tr><th>Categoría</th><th>Estado</th><th>Muestra</th><th>Mediana de baja</th><th>Nota</th></tr></thead>
+    <tbody>
+    {% for row in data.lineas_base %}
+      <tr>
+        <td>{{ row.categoria }}</td>
+        <td>{{ row.estado }}</td>
+        <td>{{ row.muestra }} / {{ row.minimo }}</td>
+        <td>{{ row.mediana_baja if row.mediana_baja is not none else "—" }}</td>
+        <td>{{ row.nota }}</td>
+      </tr>
+    {% else %}<tr><td colspan="5">Sin categorías.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="actions"><a class="button secondary" href="/export/tendencias">Descargar Excel</a></div>
+{% endblock %}

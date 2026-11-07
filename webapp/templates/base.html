@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf" content="{{ csrf }}">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{{ title }} · Dropi Tracker</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <a class="brand" href="/"><small>Catálogo local</small><strong>Dropi Tracker</strong></a>
+    <input class="nav-toggle" id="nav-toggle" type="checkbox">
+    <label class="nav-button" for="nav-toggle">Menú</label>
+    <nav class="nav">
+      <a href="/" {% if path == "/" %}class="active"{% endif %}>Resumen</a>
+      <a href="/productos" {% if path.startswith("/productos") %}class="active"{% endif %}>Productos</a>
+      <a href="/seguimiento" {% if path.startswith("/seguimiento") %}class="active"{% endif %}>Seguimiento</a>
+      <a href="/tendencias" {% if path.startswith("/tendencias") %}class="active"{% endif %}>Tendencias</a>
+      <a href="/bodegas" {% if path.startswith("/bodegas") %}class="active"{% endif %}>Bodegas</a>
+      <a href="/estudio" {% if path.startswith("/estudio") %}class="active"{% endif %}>Estudio creativo</a>
+      <a href="/ajustes" {% if path.startswith("/ajustes") %}class="active"{% endif %}>Ajustes</a>
+    </nav>
+  </aside>
+  <main class="main">
+    {% if demo %}
+    <div class="demo-banner">Datos de demostración. Conjunto sintético aislado: no es tu base real ni una consulta a Dropi.</div>
+    {% endif %}
+    {% if flash %}<div class="flash">{{ flash }}</div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+</body>
+</html>

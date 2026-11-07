@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Bodegas</h1>
+<p class="lede">El proveedor y la bodega física son registros distintos. Si solo conoces el proveedor, no se inventa una bodega.</p>
+<p class="note">{{ data.nota_stock }} Ventana de la baja bruta: {{ data.horas }} h.</p>
+<form class="inline" method="get">
+  <label>Buscar<input name="q" value="{{ q }}" placeholder="Proveedor, bodega o ciudad"></label>
+  <button type="submit">Buscar</button>
+</form>
+<form class="card stack" method="post" action="/bodegas/manual" style="margin: 1rem 0;">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <strong>Añadir proveedor manual</strong>
+  <label>Nombre<input name="nombre" required></label>
+  <label>URL<input name="url" placeholder="https://app.dropi.co/provider/123"></label>
+  <label>ID<input name="supplier_id" inputmode="numeric"></label>
+  <label>Meta de productos<input name="esperados" inputmode="numeric" value="0"></label>
+  <button type="submit">Guardar y seguir</button>
+</form>
+{% for item in data["items"] %}
+<article class="card" style="margin-bottom: 0.8rem;">
+  <h2>{{ item.nombre }}</h2>
+  <p>
+    {% if item.source_manual %}<span class="badge">manual</span>{% endif %}
+    {% if item.source_synced %}<span class="badge">directorio</span>{% endif %}
+    <span class="badge">cobertura {{ item.cobertura }}</span>
+  </p>
+  <p>Baja bruta observada: {{ item.baja_bruta }} en {{ item.productos_con_serie }} productos con serie.
+     Reposiciones: {{ item.reposiciones }}.
+     Series con confianza desconocida: {{ item.series_desconocidas }}.</p>
+  <p class="muted">{{ item.cobertura_nota }} Último snapshot: {{ item.snapshot_en }}.</p>
+  <p>Pedidos mensuales del proveedor: {{ item.pedidos_mensuales if item.pedidos_mensuales is not none else "sin dato" }}.
+     Dropshippers: {{ item.dropshippers_mensuales if item.dropshippers_mensuales is not none else "sin dato" }}.
+     Fecha de la métrica: {{ item.metricas_en }}.
+     {% if item.metricas_supuesto %}Origen de la fecha: {{ item.metricas_supuesto }}.{% endif %}</p>
+  <form method="post" action="/bodegas/{{ item.supplier_id }}/seguir" class="inline">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="seguir" value="{{ 0 if item.follow_catalog else 1 }}">
+    <button class="secondary" type="submit">{{ "Quitar seguimiento del catálogo" if item.follow_catalog else "Seguir catálogo" }}</button>
+  </form>
+  {% if item.bodegas %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Bodega física</th><th>Ciudad</th><th>Seguimiento</th></tr></thead>
+      <tbody>
+      {% for wh in item.bodegas %}
+        <tr>
+          <td>{{ wh.nombre }}<br><span class="muted">{{ wh.direccion }}</span></td>
+          <td>{{ wh.ciudad or "—" }}</td>
+          <td>
+            {{ "sí" if wh.follow else "no" }}
+            <form method="post" action="/bodegas/fisica/{{ wh.warehouse_id }}/seguir" style="display:inline">
+              <input type="hidden" name="csrf" value="{{ csrf }}">
+              <input type="hidden" name="seguir" value="{{ 0 if wh.follow else 1 }}">
+              <button class="secondary" type="submit">{{ "Dejar" if wh.follow else "Seguir" }}</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted">Sin bodega física conocida.</p>
+  {% endif %}
+</article>
+{% else %}
+<p>No hay proveedores en esta base.</p>
+{% endfor %}
+<div class="actions"><a class="button secondary" href="/export/bodegas">Descargar Excel</a></div>
+{% endblock %}
